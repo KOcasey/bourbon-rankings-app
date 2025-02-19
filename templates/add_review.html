@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Add a Review</h1>
+    <form method="POST">
+        <label for="name">Bourbon Name:</label>
+        <input type="text" name="name" id="name" required>
+
+        <label for="drink_type">Drink Type:</label>
+        <select name="drink_type" id="drink_type">
+            <option value="Neat">Neat</option>
+            <option value="On the Rocks">On the Rocks</option>
+            <option value="With Water">With Water</option>
+            <option value="With Coke">With Coke</option>
+            <option value="With Ginger Ale">With Ginger Ale</option>
+            <option value="Old Fashioned">Old Fashioned</option>
+            <option value="Whiskey Sour">Whiskey Sour</option>
+        </select>
+
+        <label for="rating">Rating:</label>
+        <input type="number" name="rating" id="rating" min="1" max="5" required>
+
+        <label for="review_text">Review:</label>
+        <textarea name="review_text" id="review_text" required></textarea>
+
+        <button type="submit">Submit Review</button>
+    </form>
+{% endblock %}

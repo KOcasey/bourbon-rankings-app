@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Edit Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Edit Review</h1>
+    <form method="post">
+        <label for="rating">Rating:</label>
+        <input type="number" name="rating" min="1" max="10" step="0.1" value="{{ review.rating }}" required>
+        
+        <label for="review_text">Review:</label>
+        <textarea name="review_text" required>{{ review.review_text }}</textarea>
+        
+        <button type="submit">Update Review</button>
+    </form>
+</body>
+</html>

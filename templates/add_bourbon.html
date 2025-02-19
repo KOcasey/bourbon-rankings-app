@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Add a New Bourbon</h1>
+    <form method="POST">
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required>
+
+        <label for="brand">Brand:</label>
+        <input type="text" name="brand" id="brand" required>
+
+        <label for="description">Description:</label>
+        <textarea name="description" id="description" required></textarea>
+
+        <button type="submit">Add Bourbon</button>
+    </form>
+{% endblock %}

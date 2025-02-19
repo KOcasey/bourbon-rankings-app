@@ -1,0 +1,116 @@
+/* General Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f8f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+/* Navigation Menu */
+nav {
+    background-color: #6b4226;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.nav-links li {
+    display: inline;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.nav-links a:hover,
+.nav-links .active {
+    background-color: #c78c60;
+}
+
+/* Filter Form */
+.filter-form {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.filter-form label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.filter-form select {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+/* Rankings List */
+.ranking-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.ranking-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f5e1da;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.bourbon-name {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #6b4226;
+}
+
+.drink-type {
+    font-style: italic;
+    color: #555;
+}
+
+.ranking-score {
+    font-weight: bold;
+    color: #d9534f;
+}
+
+.edit-btn {
+    background-color: #6b4226;
+    color: white;
+    padding: 5px 10px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.edit-btn:hover {
+    background-color: #c78c60;
+}
+
+/* Home Page Styling */
+h1 {
+    text-align: center;
+    color: #6b4226;
+}

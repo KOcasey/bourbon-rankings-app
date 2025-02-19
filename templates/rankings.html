@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h1>Current Bourbon Rankings</h1>
+
+        <!-- Filter Dropdown -->
+        <form method="GET" class="filter-form">
+            <label for="drink_type">Filter by Drink Type:</label>
+            <select name="drink_type" id="drink_type" onchange="this.form.submit()">
+                <option value="Neat" {% if request.args.get('drink_type', 'Neat') == 'Neat' %}selected{% endif %}>Neat</option>
+                <option value="On the Rocks" {% if request.args.get('drink_type') == 'On the Rocks' %}selected{% endif %}>On the Rocks</option>
+                <option value="With Water" {% if request.args.get('drink_type') == 'With Water' %}selected{% endif %}>With Water</option>
+                <option value="With Coke" {% if request.args.get('drink_type') == 'With Coke' %}selected{% endif %}>With Coke</option>
+                <option value="With Ginger Ale" {% if request.args.get('drink_type') == 'With Ginger Ale' %}selected{% endif %}>With Ginger Ale</option>
+                <option value="Old Fashioned" {% if request.args.get('drink_type') == 'Old Fashioned' %}selected{% endif %}>Old Fashioned</option>
+                <option value="Whiskey Sour" {% if request.args.get('drink_type') == 'Whiskey Sour' %}selected{% endif %}>Whiskey Sour</option>
+            </select>
+        </form>
+
+        <!-- Rankings Table -->
+        <table class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Drink Type</th>
+                    <th>Rating</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ranking in rankings %}
+                    <tr>
+                        <td>{{ ranking[0] }}</td>
+                        <td>{{ ranking[1] }}</td>
+                        <td>{{ ranking[2] }} stars</td>
+                        <td>{{ ranking[3] }}</td>
+                        <td>
+                            <a href="{{ url_for('edit_ranking', bourbon_name=ranking[0], drink_type=ranking[1]) }}" class="btn btn-sm btn-warning">Edit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
