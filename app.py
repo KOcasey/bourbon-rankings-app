@@ -125,6 +125,22 @@ def update_ranking():
 
 #     return render_template('edit_ranking.html', ranking=ranking)
 
+@app.route('/delete_bourbon/<bourbon_name>', methods=['POST'])
+def delete_bourbon(bourbon_name):
+    bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+
+    if bourbon:
+        # Delete associated rankings
+        Ranking.query.filter_by(bourbon_id=bourbon.id).delete()
+        db.session.delete(bourbon)
+        db.session.commit()
+        flash(f"{bourbon_name} and its rankings deleted.", "success")
+    else:
+        flash(f"{bourbon_name} not found.", "error")
+
+    return redirect(url_for('rankings'))
+
+
 @app.route('/save_rankings', methods=['POST'])
 def save_rankings():
     # Loop through all form data to update the rankings
@@ -236,12 +252,20 @@ def rank_bourbon():
 def add_bourbon():
     if request.method == 'POST':
         bourbon_name = request.form['name']
-        bourbon_brand = request.form['brand']
-        bourbon_description = request.form['description']
-        
+        bourbon_distillery = request.form['distillery']
+        bourbon_proof = float(request.form['proof'])  # Convert to float
+        bourbon_age = request.form['age']
+        bourbon_description = request.form.get('description', '')  # Optional field
+
         bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
         if not bourbon:
-            bourbon = Bourbon(name=bourbon_name, brand=bourbon_brand, description=bourbon_description)
+            bourbon = Bourbon(
+                name=bourbon_name, 
+                distillery=bourbon_distillery, 
+                proof=bourbon_proof, 
+                age=bourbon_age, 
+                description=bourbon_description
+            )
             db.session.add(bourbon)
             db.session.commit()
 

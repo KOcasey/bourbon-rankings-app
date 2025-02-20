@@ -38,6 +38,7 @@
                     <th>With Ginger Ale</th>
                     <th>Old Fashioned</th>
                     <th>Whiskey Sour</th>
+                    <th>Actions</th> <!-- New column for Delete Button -->
                 </tr>
             </thead>
             <tbody>
@@ -52,6 +53,13 @@
                                value="{{ bourbon_data.ratings[drink_type] }}" class="form-control score-input">
                     </td>
                     {% endfor %}
+                    
+                    <!-- Delete Button -->
+                    <td>
+                        <form action="{{ url_for('delete_bourbon', bourbon_name=bourbon_name) }}" method="post">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
