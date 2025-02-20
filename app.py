@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from extensions import db, migrate  # Use db and migrate from extensions
 from models import Bourbon, Ranking, Review  # Ensure this matches your file structure
 
@@ -15,27 +15,96 @@ migrate.init_app(app, db)
 with app.app_context():
     db.create_all()
 
+app.secret_key = "1124"  # Change this to a secure random value
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/rankings', methods=['GET', 'POST'])
+@app.route('/rankings')
 def rankings():
-    # Default drink type is 'Neat' if no filter is applied
-    drink_type_filter = request.args.get('drink_type', 'Neat')
+    sort_by = request.args.get('sort_by', 'bourbon_name')  # Default to sorting by bourbon name
+    sort_order = request.args.get('sort_order', 'asc')  # Default to ascending order
+    
+    # Construct the order by statement based on the selected sort_by field
+    if sort_by == 'bourbon_name':
+        sort_column = Bourbon.name
+    elif sort_by in ['Neat', 'On the Rocks', 'With Water', 'With Coke', 'With Ginger Ale', 'Old Fashioned', 'Whiskey Sour']:
+        # Dynamically sort by the selected drink type's score
+        sort_column = db.case(
+            (Ranking.drink_type == sort_by, Ranking.score),  # Pass conditions as positional arguments
+            else_=0  # Default score if the drink type doesn't match
+        )
+    else:
+        sort_column = getattr(Ranking, sort_by)  # Default to the selected column in Ranking model
 
-    # Build the query to fetch rankings
-    query = db.session.query(
-    Bourbon.name, Ranking.drink_type, db.func.avg(Ranking.score).label("avg_score"), Bourbon.description
-    ).join(Ranking).group_by(Bourbon.name, Ranking.drink_type)
+    # Apply sorting based on the order
+    if sort_order == 'desc':
+        sort_column = sort_column.desc()  # Sorting in descending order
+    else:
+        sort_column = sort_column.asc()  # Sorting in ascending order
 
-    # Apply filter if drink_type is provided
-    query = query.filter(Ranking.drink_type == drink_type_filter)
+    # Fetch all rankings with sorting applied
+    results = db.session.query(
+        Bourbon.name,
+        db.func.coalesce(Bourbon.description, "No description available"),
+        Ranking.drink_type,
+        db.func.coalesce(Ranking.score, 0)
+    ).outerjoin(Ranking).order_by(sort_column).all()  # Apply sorting
 
-    # Execute the query
-    rankings = query.all()
+    # Organize results into a dictionary
+    rankings_dict = {}
+    for bourbon_name, description, drink_type, score in results:
+        if bourbon_name not in rankings_dict:
+            rankings_dict[bourbon_name] = {"description": description, "ratings": {}}
+        rankings_dict[bourbon_name]["ratings"][drink_type] = score
+    
+    # Define the fixed drink types
+    drink_types = [
+        "Neat", "On the Rocks", "With Water", "With Coke", 
+        "With Ginger Ale", "Old Fashioned", "Whiskey Sour"
+    ]
+    
+    # Ensure each bourbon has a rating for each drink type (default to "N/A" or 0 if missing)
+    for bourbon_name, bourbon_data in rankings_dict.items():
+        for drink_type in drink_types:
+            if drink_type not in bourbon_data["ratings"]:
+                bourbon_data["ratings"][drink_type] = "N/A"  # Or 0 if you'd prefer
 
-    return render_template('rankings.html', rankings=rankings, drink_type=drink_type_filter)
+    return render_template('rankings.html', rankings=rankings_dict, sort_by=sort_by, sort_order=sort_order, drink_types=drink_types)
+
+
+
+@app.route('/update_ranking', methods=['POST'])
+def update_ranking():
+    bourbon_name = request.form.get('bourbon_name')
+
+    # Update description in Bourbon table
+    if f"description_{bourbon_name}" in request.form:
+        bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+        if bourbon:
+            bourbon.description = request.form[f"description_{bourbon_name}"]
+    
+    # Update all drink type ratings
+    for drink_type in ["Neat", "On the Rocks", "With Water", "With Coke", "With Ginger Ale", "Old Fashioned", "Whiskey Sour"]:
+        key = f"rating_{bourbon_name}_{drink_type}"
+        if key in request.form:
+            score = request.form[key]
+            if score:
+                score = float(score)
+                bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+                if bourbon:
+                    # Using bourbon.id to filter Ranking instead of bourbon_name
+                    ranking = Ranking.query.filter_by(bourbon_id=bourbon.id, drink_type=drink_type).first()
+                    if ranking:
+                        ranking.score = score
+                    else:
+                        new_ranking = Ranking(bourbon_id=bourbon.id, drink_type=drink_type, score=score)
+                        db.session.add(new_ranking)
+
+    db.session.commit()
+    return redirect(url_for('rankings'))
 
 
 @app.route('/edit_ranking/<bourbon_name>/<drink_type>', methods=['GET', 'POST'])
@@ -58,25 +127,43 @@ def edit_ranking(bourbon_name, drink_type):
 
 @app.route('/rank_bourbon', methods=['GET', 'POST'])
 def rank_bourbon():
-    bourbons = Bourbon.query.all()
-    drink_types = ["Neat", "On the Rocks", "With Water", "With Coke", "With Ginger Ale", "Old Fashioned", "Whiskey Sour"]
-
     if request.method == 'POST':
-        bourbon_id = request.form['bourbon_id']
-        drink_type = request.form['drink_type']
-        score = float(request.form['score'])
+        bourbon_name = request.form.get('bourbon_name')
+        drink_type = request.form.get('drink_type')
+        score = request.form.get('score')
 
-        ranking = Ranking.query.filter_by(bourbon_id=bourbon_id, drink_type=drink_type).first()
+        if not bourbon_name or not drink_type or not score:
+            flash("All fields are required!", "danger")
+            return redirect(url_for('rank_bourbon'))
+
+        score = float(score)
+
+        # Fetch the bourbon object by name
+        bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+        if not bourbon:
+            flash(f"Bourbon {bourbon_name} not found.", "danger")
+            return redirect(url_for('rank_bourbon'))
+
+        # Check if ranking already exists
+        ranking = Ranking.query.filter_by(bourbon_id=bourbon.id, drink_type=drink_type).first()
         if ranking:
-            ranking.score = score  # Update if it already exists
+            # Update existing ranking
+            ranking.score = score
+            flash(f"Updated ranking for {bourbon_name} ({drink_type})!", "success")
         else:
-            ranking = Ranking(bourbon_id=bourbon_id, drink_type=drink_type, score=score)
-            db.session.add(ranking)
-        
+            # Create new ranking
+            new_ranking = Ranking(bourbon_id=bourbon.id, drink_type=drink_type, score=score)
+            db.session.add(new_ranking)
+            flash(f"Successfully ranked {bourbon_name} ({drink_type})!", "success")
+
         db.session.commit()
         return redirect(url_for('rankings'))
 
-    return render_template('rank_bourbon.html', bourbons=bourbons, drink_types=drink_types)
+    bourbons = Bourbon.query.all()
+    return render_template('rank_bourbon.html', bourbons=bourbons)
+
+
+
 
 @app.route('/add_bourbon', methods=['GET', 'POST'])
 def add_bourbon():

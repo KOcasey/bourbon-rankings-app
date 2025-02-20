@@ -1,47 +1,52 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container">
-        <h1>Current Bourbon Rankings</h1>
+    <h1>Bourbon Rankings</h1>
 
-        <!-- Filter Dropdown -->
-        <form method="GET" class="filter-form">
-            <label for="drink_type">Filter by Drink Type:</label>
-            <select name="drink_type" id="drink_type" onchange="this.form.submit()">
-                <option value="Neat" {% if request.args.get('drink_type', 'Neat') == 'Neat' %}selected{% endif %}>Neat</option>
-                <option value="On the Rocks" {% if request.args.get('drink_type') == 'On the Rocks' %}selected{% endif %}>On the Rocks</option>
-                <option value="With Water" {% if request.args.get('drink_type') == 'With Water' %}selected{% endif %}>With Water</option>
-                <option value="With Coke" {% if request.args.get('drink_type') == 'With Coke' %}selected{% endif %}>With Coke</option>
-                <option value="With Ginger Ale" {% if request.args.get('drink_type') == 'With Ginger Ale' %}selected{% endif %}>With Ginger Ale</option>
-                <option value="Old Fashioned" {% if request.args.get('drink_type') == 'Old Fashioned' %}selected{% endif %}>Old Fashioned</option>
-                <option value="Whiskey Sour" {% if request.args.get('drink_type') == 'Whiskey Sour' %}selected{% endif %}>Whiskey Sour</option>
-            </select>
-        </form>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>
+                    <a href="{{ url_for('rankings', sort_by='bourbon_name', sort_order='asc' if sort_by != 'bourbon_name' or sort_order == 'desc' else 'desc') }}">
+                        Bourbon Name
+                        {% if sort_by == 'bourbon_name' %}
+                            {% if sort_order == 'asc' %}
+                                <span>&#8593;</span>  <!-- Up arrow for ascending -->
+                            {% else %}
+                                <span>&#8595;</span>  <!-- Down arrow for descending -->
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                </th>
 
-        <!-- Rankings Table -->
-        <table class="table table-striped mt-3">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Drink Type</th>
-                    <th>Rating</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ranking in rankings %}
-                    <tr>
-                        <td>{{ ranking[0] }}</td>
-                        <td>{{ ranking[1] }}</td>
-                        <td>{{ ranking[2] }} stars</td>
-                        <td>{{ ranking[3] }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_ranking', bourbon_name=ranking[0], drink_type=ranking[1]) }}" class="btn btn-sm btn-warning">Edit</a>
-                        </td>
-                    </tr>
+                <!-- Dynamically generate the drink type columns -->
+                {% for drink_type in drink_types %}
+                    <th>
+                        <a href="{{ url_for('rankings', sort_by=drink_type, sort_order='asc' if sort_by != drink_type or sort_order == 'desc' else 'desc') }}">
+                            {{ drink_type }}
+                            {% if sort_by == drink_type %}
+                                {% if sort_order == 'asc' %}
+                                    <span>&#8593;</span>  <!-- Up arrow for ascending -->
+                                {% else %}
+                                    <span>&#8595;</span>  <!-- Down arrow for descending -->
+                                {% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bourbon_name, bourbon_data in rankings.items() %}
+            <tr>
+                <td>{{ bourbon_name }}</td>
+
+                <!-- Display ratings for each drink type -->
+                {% for drink_type in drink_types %}
+                    <td>{{ bourbon_data["ratings"].get(drink_type, "N/A") }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

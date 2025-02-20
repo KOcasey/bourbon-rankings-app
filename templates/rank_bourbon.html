@@ -1,25 +1,49 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Rank a Bourbon</h1>
-    <form method="POST">
-        <label for="bourbon_id">Select Bourbon:</label>
-        <select name="bourbon_id" id="bourbon_id">
-            {% for bourbon in bourbons %}
-                <option value="{{ bourbon.id }}">{{ bourbon.name }}</option>
-            {% endfor %}
-        </select>
-        
-        <label for="drink_type">Drink Type:</label>
-        <select name="drink_type" id="drink_type">
-            {% for drink in drink_types %}
-                <option value="{{ drink }}">{{ drink }}</option>
-            {% endfor %}
-        </select>
+<div class="container">
+    <h1 class="text-center">Rank a Bourbon</h1>
 
-        <label for="score">Score:</label>
-        <input type="number" name="score" id="score" min="1" max="5">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-{{ messages[0][0] }}">
+                {{ messages[0][1] }}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-        <button type="submit">Submit Ranking</button>
+    <form method="POST" action="{{ url_for('rank_bourbon') }}">
+        <div class="form-group">
+            <label for="bourbon_name">Bourbon Name:</label>
+            <select name="bourbon_name" id="bourbon_name" class="form-control" required>
+                <option value="" disabled selected>Select a Bourbon</option>
+                {% for bourbon in bourbons %}
+                    <option value="{{ bourbon.name }}">{{ bourbon.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="drink_type">Drink Type:</label>
+            <select name="drink_type" id="drink_type" class="form-control" required>
+                <option value="" disabled selected>Select a Drink Type</option>
+                <option value="Neat">Neat</option>
+                <option value="On the Rocks">On the Rocks</option>
+                <option value="With Water">With Water</option>
+                <option value="With Coke">With Coke</option>
+                <option value="With Ginger Ale">With Ginger Ale</option>
+                <option value="Old Fashioned">Old Fashioned</option>
+                <option value="Whiskey Sour">Whiskey Sour</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="score">Rating (1-10):</label>
+            <input type="number" step="0.1" min="1" max="10" name="score" id="score" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Ranking</button>
     </form>
+</div>
 {% endblock %}
