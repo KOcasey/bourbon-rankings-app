@@ -107,23 +107,90 @@ def update_ranking():
     return redirect(url_for('rankings'))
 
 
-@app.route('/edit_ranking/<bourbon_name>/<drink_type>', methods=['GET', 'POST'])
-def edit_ranking(bourbon_name, drink_type):
-    # Retrieve the ranking based on bourbon name and drink type
-    ranking = Ranking.query.join(Bourbon).filter(Bourbon.name == bourbon_name, Ranking.drink_type == drink_type).first()
+# @app.route('/edit_ranking/<bourbon_name>/<drink_type>', methods=['GET', 'POST'])
+# def edit_ranking(bourbon_name, drink_type):
+#     # Retrieve the ranking based on bourbon name and drink type
+#     ranking = Ranking.query.join(Bourbon).filter(Bourbon.name == bourbon_name, Ranking.drink_type == drink_type).first()
 
-    if request.method == 'POST':
-        # Get the new score from the form
-        new_score = float(request.form['score'])
+#     if request.method == 'POST':
+#         # Get the new score from the form
+#         new_score = float(request.form['score'])
         
-        # Update the ranking score
-        ranking.score = new_score
-        db.session.commit()
+#         # Update the ranking score
+#         ranking.score = new_score
+#         db.session.commit()
         
-        # Redirect back to the rankings page
+#         # Redirect back to the rankings page
+#         return redirect(url_for('rankings'))
+
+#     return render_template('edit_ranking.html', ranking=ranking)
+
+@app.route('/save_rankings', methods=['POST'])
+def save_rankings():
+    # Loop through all form data to update the rankings
+    for key, value in request.form.items():
+        if key.endswith('_Neat') or key.endswith('_On the Rocks') or key.endswith('_With Water') or \
+           key.endswith('_With Coke') or key.endswith('_With Ginger Ale') or key.endswith('_Old Fashioned') or \
+           key.endswith('_Whiskey Sour'):
+
+            # Extract bourbon name and drink type from the field name
+            bourbon_name, drink_type = key.split('_', 1)
+
+            # Find the bourbon
+            bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+            if not bourbon:
+                continue
+
+            # Skip empty values
+            if not value.strip():  # Check if the value is an empty string or just spaces
+                continue
+
+            # Check if ranking exists for this bourbon and drink type
+            ranking = Ranking.query.filter_by(bourbon_id=bourbon.id, drink_type=drink_type).first()
+
+            if not ranking:
+                # If no ranking exists, create a new ranking
+                ranking = Ranking(bourbon_id=bourbon.id, drink_type=drink_type, score=float(value))
+                db.session.add(ranking)  # Add the new ranking to the session
+            else:
+                # If ranking exists, update the score
+                ranking.score = float(value)
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    flash("Rankings saved successfully!", "success")
+    return redirect(url_for('rankings'))
+
+
+@app.route('/edit_ranking/<bourbon_name>/<drink_type>', methods=['POST'])
+def edit_ranking(bourbon_name, drink_type):
+    score = request.form.get('score')
+    
+    if not score:
+        flash("Score is required", "danger")
         return redirect(url_for('rankings'))
 
-    return render_template('edit_ranking.html', ranking=ranking)
+    score = float(score)
+
+    # Find the bourbon and the ranking for the given drink type
+    bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+    if not bourbon:
+        flash(f"Bourbon {bourbon_name} not found!", "danger")
+        return redirect(url_for('rankings'))
+
+    ranking = Ranking.query.filter_by(bourbon_id=bourbon.id, drink_type=drink_type).first()
+    if not ranking:
+        flash(f"Ranking not found for {bourbon_name} ({drink_type})", "danger")
+        return redirect(url_for('rankings'))
+
+    # Update the score
+    ranking.score = score
+    db.session.commit()
+
+    flash(f"Successfully updated the ranking for {bourbon_name} ({drink_type})!", "success")
+    return redirect(url_for('rankings'))
+
 
 @app.route('/rank_bourbon', methods=['GET', 'POST'])
 def rank_bourbon():

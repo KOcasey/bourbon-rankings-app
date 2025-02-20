@@ -1,52 +1,79 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Bourbon Rankings</h1>
+<div class="container">
+    <h1 class="text-center">Rankings</h1>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>
-                    <a href="{{ url_for('rankings', sort_by='bourbon_name', sort_order='asc' if sort_by != 'bourbon_name' or sort_order == 'desc' else 'desc') }}">
-                        Bourbon Name
-                        {% if sort_by == 'bourbon_name' %}
-                            {% if sort_order == 'asc' %}
-                                <span>&#8593;</span>  <!-- Up arrow for ascending -->
-                            {% else %}
-                                <span>&#8595;</span>  <!-- Down arrow for descending -->
-                            {% endif %}
-                        {% endif %}
-                    </a>
-                </th>
+    <form method="GET" action="{{ url_for('rankings') }}">
+        <label for="sort_by">Sort by:</label>
+        <select name="sort_by" id="sort_by">
+            <option value="bourbon_name" {% if sort_by == 'bourbon_name' %}selected{% endif %}>Bourbon Name</option>
+            <option value="drink_type" {% if sort_by == 'drink_type' %}selected{% endif %}>Drink Type</option>
+            <option value="Neat" {% if sort_by == 'Neat' %}selected{% endif %}>Neat</option>
+            <option value="On the Rocks" {% if sort_by == 'On the Rocks' %}selected{% endif %}>On the Rocks</option>
+            <option value="With Water" {% if sort_by == 'With Water' %}selected{% endif %}>With Water</option>
+            <option value="With Coke" {% if sort_by == 'With Coke' %}selected{% endif %}>With Coke</option>
+            <option value="With Ginger Ale" {% if sort_by == 'With Ginger Ale' %}selected{% endif %}>With Ginger Ale</option>
+            <option value="Old Fashioned" {% if sort_by == 'Old Fashioned' %}selected{% endif %}>Old Fashioned</option>
+            <option value="Whiskey Sour" {% if sort_by == 'Whiskey Sour' %}selected{% endif %}>Whiskey Sour</option>
+        </select>
+        
+        <select name="sort_order" id="sort_order">
+            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Sort</button>
+    </form>
 
-                <!-- Dynamically generate the drink type columns -->
-                {% for drink_type in drink_types %}
-                    <th>
-                        <a href="{{ url_for('rankings', sort_by=drink_type, sort_order='asc' if sort_by != drink_type or sort_order == 'desc' else 'desc') }}">
-                            {{ drink_type }}
-                            {% if sort_by == drink_type %}
-                                {% if sort_order == 'asc' %}
-                                    <span>&#8593;</span>  <!-- Up arrow for ascending -->
-                                {% else %}
-                                    <span>&#8595;</span>  <!-- Down arrow for descending -->
-                                {% endif %}
-                            {% endif %}
-                        </a>
-                    </th>
+    <form method="POST" action="{{ url_for('save_rankings') }}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Bourbon</th>
+                    <th>Description</th>
+                    <th>Neat</th>
+                    <th>On the Rocks</th>
+                    <th>With Water</th>
+                    <th>With Coke</th>
+                    <th>With Ginger Ale</th>
+                    <th>Old Fashioned</th>
+                    <th>Whiskey Sour</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bourbon_name, bourbon_data in rankings.items() %}
+                <tr>
+                    <td>{{ bourbon_name }}</td>
+                    <td>{{ bourbon_data.description }}</td>
+
+                    {% for drink_type in drink_types %}
+                    <td>
+                        <input type="number" step="0.1" min="1" max="10" name="{{ bourbon_name }}_{{ drink_type }}" 
+                               value="{{ bourbon_data.ratings[drink_type] }}" class="form-control score-input">
+                    </td>
+                    {% endfor %}
+                </tr>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for bourbon_name, bourbon_data in rankings.items() %}
-            <tr>
-                <td>{{ bourbon_name }}</td>
+            </tbody>
+        </table>
 
-                <!-- Display ratings for each drink type -->
-                {% for drink_type in drink_types %}
-                    <td>{{ bourbon_data["ratings"].get(drink_type, "N/A") }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <!-- Save button will only appear if a score is modified -->
+        <div id="save-btn-container" style="display: none;">
+            <button type="submit" class="btn btn-primary">Save Rankings</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Listen for changes to any score input fields
+    const scoreInputs = document.querySelectorAll('.score-input');
+    const saveButtonContainer = document.getElementById('save-btn-container');
+
+    scoreInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            saveButtonContainer.style.display = 'block'; // Show save button when any input is changed
+        });
+    });
+</script>
+
 {% endblock %}
