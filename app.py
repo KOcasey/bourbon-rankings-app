@@ -45,19 +45,27 @@ def rankings():
     else:
         sort_column = sort_column.asc()  # Sorting in ascending order
 
-    # Fetch all rankings with sorting applied
     results = db.session.query(
-        Bourbon.name,
-        db.func.coalesce(Bourbon.description, "No description available"),
-        Ranking.drink_type,
-        db.func.coalesce(Ranking.score, 0)
+    Bourbon.name,
+    db.func.coalesce(Bourbon.description, "No description available"),
+    db.func.coalesce(Bourbon.distillery, "Unknown"),
+    db.func.coalesce(Bourbon.proof, "N/A"),
+    db.func.coalesce(Bourbon.age, "N/A"),
+    Ranking.drink_type,
+    db.func.coalesce(Ranking.score, 0)
     ).outerjoin(Ranking).order_by(sort_column).all()  # Apply sorting
 
     # Organize results into a dictionary
     rankings_dict = {}
-    for bourbon_name, description, drink_type, score in results:
+    for bourbon_name, description, distillery, proof, age, drink_type, score in results:
         if bourbon_name not in rankings_dict:
-            rankings_dict[bourbon_name] = {"description": description, "ratings": {}}
+            rankings_dict[bourbon_name] = {
+                "description": description,
+                "distillery": distillery,
+                "proof": proof,
+                "age": age,
+                "ratings": {}
+            }
         rankings_dict[bourbon_name]["ratings"][drink_type] = score
     
     # Define the fixed drink types
@@ -171,6 +179,13 @@ def save_rankings():
             else:
                 # If ranking exists, update the score
                 ranking.score = float(value)
+        # Handle description updates
+        elif key.endswith('_description'):
+            bourbon_name = key.rsplit('_', 1)[0]  # Extract bourbon name
+            bourbon = Bourbon.query.filter_by(name=bourbon_name).first()
+            
+            if bourbon and value.strip():  # Ensure bourbon exists and value isn't empty
+                bourbon.description = value.strip()
 
     # Commit the changes to the database
     db.session.commit()

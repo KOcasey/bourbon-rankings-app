@@ -17,7 +17,7 @@
             <option value="Old Fashioned" {% if sort_by == 'Old Fashioned' %}selected{% endif %}>Old Fashioned</option>
             <option value="Whiskey Sour" {% if sort_by == 'Whiskey Sour' %}selected{% endif %}>Whiskey Sour</option>
         </select>
-        
+
         <select name="sort_order" id="sort_order">
             <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Ascending</option>
             <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Descending</option>
@@ -25,7 +25,8 @@
         <button type="submit" class="btn btn-secondary">Sort</button>
     </form>
 
-    <form method="POST" action="{{ url_for('save_rankings') }}">
+    <!-- Rankings Form -->
+    <form method="POST" action="{{ url_for('save_rankings') }}" id="rankings-form">
         <table class="table">
             <thead>
                 <tr>
@@ -44,20 +45,32 @@
             <tbody>
                 {% for bourbon_name, bourbon_data in rankings.items() %}
                 <tr>
-                    <td>{{ bourbon_name }}</td>
-                    <td>{{ bourbon_data.description }}</td>
+                    <td>
+                        <span data-bs-toggle="tooltip" 
+                              title="Distillery: {{ bourbon_data.distillery or 'Unknown' }} | 
+                                     Proof: {{ bourbon_data.proof or 'N/A' }} | 
+                                     Age: {{ bourbon_data.age or 'N/A' }} | 
+                                     Description: {{ bourbon_data.description or 'No description available' }}">
+                            {{ bourbon_name }}
+                        </span>
+                    </td>
+                    <td>
+                        <input type="text" name="{{ bourbon_name }}_description"
+                               value="{{ bourbon_data.description }}" 
+                               class="form-control description-input">
+                    </td>                    
 
                     {% for drink_type in drink_types %}
                     <td>
-                        <input type="number" step="0.1" min="1" max="10" name="{{ bourbon_name }}_{{ drink_type }}" 
+                        <input type="number" step="0.1" min="0" max="10" name="{{ bourbon_name }}_{{ drink_type }}" 
                                value="{{ bourbon_data.ratings[drink_type] }}" class="form-control score-input">
                     </td>
                     {% endfor %}
                     
-                    <!-- Delete Button -->
+                    <!-- Delete Button (Separate Form) -->
                     <td>
-                        <form action="{{ url_for('delete_bourbon', bourbon_name=bourbon_name) }}" method="post">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <form action="{{ url_for('delete_bourbon', bourbon_name=bourbon_name) }}" method="post" class="delete-form">
+                            <button type="submit" class="btn btn-danger btn-sm delete-btn">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -67,19 +80,47 @@
 
         <!-- Save button will only appear if a score is modified -->
         <div id="save-btn-container" style="display: none;">
-            <button type="submit" class="btn btn-primary">Save Rankings</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
     </form>
 </div>
 
 <script>
-    // Listen for changes to any score input fields
-    const scoreInputs = document.querySelectorAll('.score-input');
-    const saveButtonContainer = document.getElementById('save-btn-container');
+    document.addEventListener('DOMContentLoaded', function () {
+        const scoreInputs = document.querySelectorAll('.score-input');
+        const descriptionInputs = document.querySelectorAll('.description-input');
+        const saveButtonContainer = document.getElementById('save-btn-container');
 
-    scoreInputs.forEach(input => {
-        input.addEventListener('input', () => {
-            saveButtonContainer.style.display = 'block'; // Show save button when any input is changed
+        scoreInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                saveButtonContainer.style.display = 'block';
+            });
+        });
+
+        descriptionInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                saveButtonContainer.style.display = 'block';
+            });
+        });
+
+        // Ensure only delete buttons submit their respective forms
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault();  // Prevent default form submission
+                event.stopPropagation(); // Stop bubbling to other elements
+                const bourbonName = this.closest('tr').querySelector('td:first-child').textContent.trim();
+                const confirmDelete = confirm(`Are you sure you want to delete "${bourbonName}"? This action cannot be undone.`);
+                
+                if (confirmDelete) {
+                    this.closest('form').submit(); // Proceed with deletion
+                }
+            });
+        });
+
+        // Activate Bootstrap Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
 </script>
