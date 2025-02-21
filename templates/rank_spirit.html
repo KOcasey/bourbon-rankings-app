@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center">Rank a Bourbon</h1>
+    <h1 class="text-center">Rank a Spirit</h1>
 
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -13,13 +13,13 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('rank_bourbon') }}">
+    <form method="POST" action="{{ url_for('rank_spirit') }}">
         <div class="form-group">
-            <label for="bourbon_name">Bourbon Name:</label>
-            <select name="bourbon_name" id="bourbon_name" class="form-control" required>
-                <option value="" disabled selected>Select a Bourbon</option>
-                {% for bourbon in bourbons %}
-                    <option value="{{ bourbon.name }}">{{ bourbon.name }}</option>
+            <label for="spirit_name">Spirit Name:</label>
+            <select name="spirit_name" id="spirit_name" class="form-control" required>
+                <option value="" disabled selected>Select a Spirit</option>
+                {% for spirit in spirit %}
+                    <option value="{{ spirit.name }}">{{ spirit.name }}</option>
                 {% endfor %}
             </select>
         </div>

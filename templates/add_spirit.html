@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Add a New Spirit</h1>
+    <form method="POST">
+        <label for="spirit_type">Spirit Type:</label>
+        <select name="spirit_type" id="spirit_type" required>
+            <option value="Bourbon">Bourbon</option>
+            <option value="Rum">Rum</option>
+            <option value="Whiskey">Whiskey</option>
+            <option value="Tequila">Tequila</option>
+            <option value="Gin">Gin</option>
+            <option value="Vodka">Vodka</option>
+        </select>
+
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required>
+
+        <label for="distillery">Distillery:</label>
+        <input type="text" name="distillery" id="distillery">
+
+        <label for="proof">Proof:</label>
+        <input type="number" name="proof" id="proof" step="0.1" min="0">
+
+        <label for="age">Age:</label>
+        <input type="text" name="age" id="age">
+
+        <label for="description">Description (optional):</label>
+        <textarea name="description" id="description"></textarea>
+
+        <button type="submit">Add Spirit</button>
+    </form>
+{% endblock %}

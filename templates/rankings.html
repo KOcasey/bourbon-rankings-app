@@ -4,10 +4,16 @@
 <div class="container">
     <h1 class="text-center">Rankings</h1>
 
-    <form method="GET" action="{{ url_for('rankings') }}">
+    <form method="GET" action="{{ url_for('rankings') }}" id="filter-form">
+        <label for="spirit_type">Spirit Type:</label>
+        <select name="spirit_type" id="spirit_type" onchange="document.getElementById('filter-form').submit();">
+            <option value="Bourbon" {% if spirit_type == 'Bourbon' %}selected{% endif %}>Bourbon</option>
+            <option value="Rum" {% if spirit_type == 'Rum' %}selected{% endif %}>Rum</option>
+        </select>
+
         <label for="sort_by">Sort by:</label>
         <select name="sort_by" id="sort_by">
-            <option value="bourbon_name" {% if sort_by == 'bourbon_name' %}selected{% endif %}>Bourbon Name</option>
+            <option value="spirit_name" {% if sort_by == 'spirit_name' %}selected{% endif %}>Spirit Name</option>
             <option value="drink_type" {% if sort_by == 'drink_type' %}selected{% endif %}>Drink Type</option>
             <option value="Neat" {% if sort_by == 'Neat' %}selected{% endif %}>Neat</option>
             <option value="On the Rocks" {% if sort_by == 'On the Rocks' %}selected{% endif %}>On the Rocks</option>
@@ -27,10 +33,11 @@
 
     <!-- Rankings Form -->
     <form method="POST" action="{{ url_for('save_rankings') }}" id="rankings-form">
+        <input type="hidden" name="spirit_type" value="{{ spirit_type }}">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Bourbon</th>
+                    <th>Spirit Name</th>
                     <th>Description</th>
                     <th>Neat</th>
                     <th>On the Rocks</th>
@@ -43,33 +50,34 @@
                 </tr>
             </thead>
             <tbody>
-                {% for bourbon_name, bourbon_data in rankings.items() %}
+                {% for spirit_name, spirit_data in rankings.items() %}
                 <tr>
                     <td>
                         <span data-bs-toggle="tooltip" 
-                              title="Distillery: {{ bourbon_data.distillery or 'Unknown' }} | 
-                                     Proof: {{ bourbon_data.proof or 'N/A' }} | 
-                                     Age: {{ bourbon_data.age or 'N/A' }} | 
-                                     Description: {{ bourbon_data.description or 'No description available' }}">
-                            {{ bourbon_name }}
+                              title="Distillery: {{ spirit_data.distillery or 'Unknown' }} | 
+                                     Proof: {{ spirit_data.proof or 'N/A' }} | 
+                                     Age: {{ spirit_data.age or 'N/A' }} | 
+                                     Description: {{ spirit_data.description or 'No description available' }}">
+                            {{ spirit_name }}
                         </span>
                     </td>
                     <td>
-                        <input type="text" name="{{ bourbon_name }}_description"
-                               value="{{ bourbon_data.description }}" 
+                        <input type="text" name="{{ spirit_name }}_description"
+                               value="{{ spirit_data.description }}" 
                                class="form-control description-input">
                     </td>                    
 
                     {% for drink_type in drink_types %}
                     <td>
-                        <input type="number" step="0.1" min="0" max="10" name="{{ bourbon_name }}_{{ drink_type }}" 
-                               value="{{ bourbon_data.ratings[drink_type] }}" class="form-control score-input">
+                        <input type="number" step="0.1" min="0" max="10" name="{{ spirit_name }}_{{ drink_type }}" 
+                               value="{{ spirit_data.ratings[drink_type] }}" class="form-control score-input">
                     </td>
                     {% endfor %}
                     
                     <!-- Delete Button (Separate Form) -->
                     <td>
-                        <form action="{{ url_for('delete_bourbon', bourbon_name=bourbon_name) }}" method="post" class="delete-form">
+                        <form action="{{ url_for('delete_spirit', spirit_type=spirit_type, spirit_name=spirit_name) }}" method="post" class="delete-form">
+                            <input type="hidden" name="spirit_type" value="{{ spirit_type }}">
                             <button type="submit" class="btn btn-danger btn-sm delete-btn">Delete</button>
                         </form>
                     </td>
@@ -108,11 +116,10 @@
             button.addEventListener('click', function (event) {
                 event.preventDefault();  // Prevent default form submission
                 event.stopPropagation(); // Stop bubbling to other elements
-                const bourbonName = this.closest('tr').querySelector('td:first-child').textContent.trim();
-                const confirmDelete = confirm(`Are you sure you want to delete "${bourbonName}"? This action cannot be undone.`);
-                
-                if (confirmDelete) {
-                    this.closest('form').submit(); // Proceed with deletion
+                let spiritName = this.closest('tr').querySelector('td:first-child').innerText;
+                let spiritType = document.getElementById('spirit_type').value;
+                if (confirm(`Are you sure you want to delete ${spiritName} (${spiritType})?`)) {
+                    this.closest('form').submit();
                 }
             });
         });
